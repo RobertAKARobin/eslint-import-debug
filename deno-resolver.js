@@ -12,7 +12,8 @@ module.exports = {
 		redirectedReference,
 		options
 	) => moduleNames.map((moduleName) => {
-		if (moduleName.startsWith(`http`)) {
+		const isDeno = moduleName.includes(`deno.land`) || containingFile.includes(`deno.land`);
+		if (isDeno) {
 			const { found, path } = denoResolver.resolve(
 				moduleName,
 				containingFile,
@@ -20,8 +21,12 @@ module.exports = {
 					importMap: __dirname + (denoConfig.importMap || `import-map.json`),
 				}
 			);
-			if (found) {
-				moduleName = path;
+			if (!found) {
+				return undefined;
+			}
+			return {
+				resolvedFileName: path,
+				extension: `.ts`,
 			}
 		}
 		return ts.resolveModuleName(

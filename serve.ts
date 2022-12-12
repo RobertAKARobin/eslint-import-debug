@@ -1,3 +1,4 @@
+// This is just a little test program. It serves files from the `public` folder
 import * as path from 'https://deno.land/std@0.133.0/path/mod.ts';
 import { serve } from 'https://deno.land/std@0.133.0/http/server.ts';
 

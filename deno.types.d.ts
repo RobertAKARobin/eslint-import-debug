@@ -1,3 +1,5 @@
+// TODO: This is copied and pasted from https://github.com/denoland/deno/blob/main/cli/tsc/dts/lib.deno.ns.d.ts. Would be nice to not have to do that
+
 // Copyright 2018-2022 the Deno authors. All rights reserved. MIT license.
 
 /** Deno provides extra properties on `import.meta`. These are included here

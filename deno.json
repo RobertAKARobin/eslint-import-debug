@@ -2,6 +2,5 @@
 	"tasks": {
 		"build": "deno bundle --watch --no-clear-screen src/index.ts dist/index.js",
 		"serve": "deno run --watch --no-clear-screen --allow-net --allow-read serve.ts"
-	},
-	"importMap": "import_map.jsonc"
+	}
 }

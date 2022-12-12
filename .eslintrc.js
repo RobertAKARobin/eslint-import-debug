@@ -4,12 +4,9 @@ module.exports = {
 		`plugin:@typescript-eslint/eslint-recommended`,
 		`plugin:@typescript-eslint/recommended`
 	],
-	env: {
-		es6: true,
-		node: true,
-	},
 	ignorePatterns: [
-		`**/*.js`
+		`**/*.js`,
+		`deno.types.d.ts`
 	],
 	overrides: [
 		{
@@ -19,7 +16,7 @@ module.exports = {
 			files: [`*.ts`],
 			parser: `@typescript-eslint/parser`,
 			parserOptions: {
-				moduleResolver: __dirname + `/eslint/deno-resolver.js`,
+				moduleResolver: __dirname + `/deno-resolver.js`,
 				project: [`./tsconfig.json`]
 			},
 		},

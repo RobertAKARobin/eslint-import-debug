@@ -33,4 +33,7 @@
 // console.log(`Serving on http://localhost:${PORT}`);
 // serve(handleRequest, { port: PORT });
 
-console.log(Deno.readFile(`foo.txt`));
+void (async function() {
+	const foo = await Deno.readFile(`foo.txt`);
+	console.log(foo);
+})();

@@ -1,7 +1,7 @@
 const ts = require(`typescript`);
 const denoResolver = require(`eslint-import-resolver-deno`);
 
-const denoConfig = require(`../deno.json`);
+const denoConfig = require(`./deno.json`);
 
 const tsExtension = /\.ts$/;
 module.exports = {

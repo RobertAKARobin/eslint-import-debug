@@ -18,7 +18,7 @@ async function handleRequest(request: Request): Promise<Response> {
     const file = await Deno.readFile(pathname);
     return new Response(file, {
       headers: {
-        'content-type': lookup(pathname),
+        'content-type': lookup(pathname) || ``,
       }
     });
   } catch (error) {

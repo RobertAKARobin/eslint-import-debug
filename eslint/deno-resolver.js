@@ -1,6 +1,8 @@
 const ts = require(`typescript`);
 const denoResolver = require(`eslint-import-resolver-deno`);
 
+const denoConfig = require(`../deno.json`);
+
 const tsExtension = /\.ts$/;
 module.exports = {
 	resolveModuleNames: (
@@ -15,7 +17,7 @@ module.exports = {
 				moduleName,
 				containingFile,
 				{
-					importMap: __dirname + `/import-map.json`,
+					importMap: __dirname + (denoConfig.importMap || `import-map.json`),
 				}
 			);
 			if (found) {

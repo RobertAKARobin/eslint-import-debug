@@ -8,26 +8,26 @@ const rootFile = path.fromFileUrl(import.meta.url);
 const rootDir = path.dirname(rootFile);
 
 async function handleRequest(request: Request): Promise<Response> {
-  let { pathname } = new URL(request.url);
-  if (pathname.endsWith('/')) {
-    pathname += 'index.html';
-  }
-  pathname = `${rootDir}/public${pathname}`;
+	let { pathname } = new URL(request.url);
+	if (pathname.endsWith('/')) {
+		pathname += 'index.html';
+	}
+	pathname = `${rootDir}/public${pathname}`;
 	console.log(pathname);
 
-  try {
-    const file = await Deno.readFile(pathname);
-    return new Response(file, {
-      headers: {
-        'content-type': lookup(pathname) || ``,
-      }
-    });
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return new Response(null, { status: 404 });
-    }
-    return new Response(null, { status: 500 })
-  }
+	try {
+		const file = await Deno.readFile(pathname);
+		return new Response(file, {
+			headers: {
+				'content-type': lookup(pathname) || ``,
+			}
+		});
+	} catch (error) {
+		if (error instanceof Deno.errors.NotFound) {
+			return new Response(null, { status: 404 });
+		}
+		return new Response(null, { status: 500 })
+	}
 }
 
 void (async function() {

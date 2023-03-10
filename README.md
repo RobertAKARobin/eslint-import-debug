@@ -8,6 +8,7 @@ Work-in-progress, trying to make ESLint "work" on Deno projects.
 
 1. ESLint correctly lints everything (`npm run lint`)
 2. Deno correctly builds everything (`deno task serve`)
+3. VSCode's linting matches the output of ESLint
 
 ## Discussions
 

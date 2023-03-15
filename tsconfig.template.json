@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"lib": [
+			"DOM",
+			"ESNext"
+		],
+		"module": "ESNext"
+	},
+	"files": [
+		"deno.types.d.ts"
+	],
+	"include": [
+		"serve.ts"
+	]
+}

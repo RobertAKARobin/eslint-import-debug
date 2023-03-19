@@ -15,6 +15,4 @@ const denoTypesPath_local = `deno.types.d.ts`;
 	const denoTypesResponse = await fetch(denoTypesPath_remote);
 	const denoTypes = await denoTypesResponse.text();
 	fs.writeFileSync(denoTypesPath_local, denoTypes);
-
-	await sys.exec(`deno vendor serve.ts`); // TODO config vendor
 })();

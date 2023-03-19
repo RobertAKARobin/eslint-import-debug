@@ -3,16 +3,17 @@ const fs = require(`fs`);
 const pathUtil = require(`path`);
 const ts = require(`typescript`);
 
-const denoVendorDirPath = `./vendor`; // TODO config
-const denoImportmapPath = `${denoVendorDirPath}/import_map.json`; // TODO config
+const denoConfigPath = `deno.json`; // TODO configurable
 
 const rx_isRemote = /https?:\/\//;
 
-const tsConfigTemplatePath = `tsconfig.template.json`;
-const tsConfigPath = `tsconfig.json`;
+const tsConfigTemplatePath = `tsconfig.template.json`; // TODO configurable
+const tsConfigPath = `tsconfig.json`; // TODO configurable
 const tsFileExtension = /\.ts$/;
 
-const denoImportmap = JSON.parse(fs.readFileSync(denoImportmapPath)).imports; // TODO load from deno.json, which gets it from deno vendor
+const denoConfig = JSON.parse(fs.readFileSync(denoConfigPath)); // TODO load .jsonc
+const denoImportmap = JSON.parse(fs.readFileSync(denoConfig.importMap)).imports;
+const denoVendorDirPath = denoConfig.importMap.match(/\/(.*?)\//)[1]; // TODO probably brittle
 
 const tsConfig = JSON.parse(fs.readFileSync(tsConfigTemplatePath));
 tsConfig.compilerOptions = {

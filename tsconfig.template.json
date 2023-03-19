@@ -1,11 +1,13 @@
 {
 	"compilerOptions": {
+		"allowImportingTsExtensions": true,
 		"baseUrl": ".",
 		"lib": [
 			"DOM",
 			"ESNext"
 		],
-		"module": "ESNext"
+		"module": "ESNext",
+		"noEmit": true
 	},
 	"files": [
 		"deno.types.d.ts"

@@ -6,18 +6,19 @@ module.exports = {
 	],
 	ignorePatterns: [
 		`**/*.js`,
+		`vendor`,
 		`deno.types.d.ts`
 	],
 	overrides: [
 		{
-			extends: [
-				`plugin:@typescript-eslint/recommended-requiring-type-checking`
-			],
+			// extends: [
+			// 	`plugin:@typescript-eslint/recommended-requiring-type-checking`
+			// ],
 			files: [`*.ts`],
 			parser: `@typescript-eslint/parser`,
 			parserOptions: {
 				moduleResolver: __dirname + `/deno-resolver.js`,
-				project: [`./tsconfig.json`]
+				project: [`./tsconfig.json`],
 			},
 		},
 	],

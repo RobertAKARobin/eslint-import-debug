@@ -1,41 +1,58 @@
 // This is brittle; just trying to get it to work before making it robust
+const fs = require(`fs`);
+const pathUtil = require(`path`);
 const ts = require(`typescript`);
-const denoResolver = require(`eslint-import-resolver-deno`);
 
-const denoConfig = require(`./deno.json`); // TODO: Don't hardcode config location
+const denoVendorDirPath = `./vendor`; // TODO config
+const denoImportmapPath = `${denoVendorDirPath}/import_map.json`; // TODO config
 
-const tsExtension = /\.ts$/;
+const rx_isRemote = /https?:\/\//;
+
+const tsConfigTemplatePath = `tsconfig.template.json`;
+const tsConfigPath = `tsconfig.json`;
+const tsFileExtension = /\.ts$/;
+
+const denoImportmap = JSON.parse(fs.readFileSync(denoImportmapPath)).imports; // TODO load from deno.json, which gets it from deno vendor
+
+const tsConfig = JSON.parse(fs.readFileSync(tsConfigTemplatePath));
+tsConfig.compilerOptions = {
+	...(tsConfig.compilerOptions || {}),
+	paths: {
+		...(tsConfig.compilerOptions.paths || {}),
+	}
+}
+
 module.exports = {
 	resolveModuleNames: (
-		moduleNames,
-		containingFile,
-		reusedNames,
-		redirectedReference,
-		options
-	) => moduleNames.map((moduleName) => {
-		const isDeno = moduleName.includes(`deno.land`) || containingFile.includes(`deno.land`); // TODO: Probably need something more robust than this
-		if (isDeno) {
-			const { found, path } = denoResolver.resolve(
-				moduleName,
-				containingFile,
-				{
-					importMap: __dirname + (denoConfig.importMap || `import-map.json`),
-				}
-			);
-			if (!found) {
-				return undefined;
+		modulesNames,
+		moduleContainerName,
+		_reusedNames,
+		_redirectedReference,
+		options,
+	) => {
+		const modulesResolved = modulesNames.map((moduleName) => {
+			let moduleName_out = moduleName;
+
+			if (rx_isRemote.test(moduleName)) {
+				const moduleUrl = new URL(moduleName);
+				const moduleDir_vendor = denoImportmap[`${moduleUrl.origin}/`];
+				moduleName_out = pathUtil.join(
+					denoVendorDirPath,
+					moduleDir_vendor,
+					moduleUrl.pathname,
+				);
+				tsConfig.compilerOptions.paths[moduleName] = [moduleName_out];
 			}
-			return { // Can't use `ts.resolveModuleName` because it forces `.ts` or one of a few other file extensions, and the items in the Deno cache have no file extensions
-				resolvedFileName: path,
-				extension: `.ts`,
-				// TODO: Add missing items from ResolvedModuleFull?
-			}
-		}
-		return ts.resolveModuleName(
-			moduleName.replace(tsExtension, ``),
-			containingFile,
-			options,
-			ts.sys
-		).resolvedModule;
-	}),
+
+			return ts.resolveModuleName(
+				moduleName_out.replace(tsFileExtension, ``),
+				moduleContainerName,
+				options,
+				ts.sys
+			).resolvedModule;
+		});
+
+		fs.writeFileSync(tsConfigPath, JSON.stringify(tsConfig, null, `\t`));
+		return modulesResolved;
+	},
 };

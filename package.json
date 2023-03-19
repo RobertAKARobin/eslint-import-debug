@@ -6,6 +6,6 @@
 		"typescript": "^5.0.2"
 	},
 	"scripts": {
-		"lint": "eslint ."
+		"lint": "node prelint.js && eslint ."
 	}
 }

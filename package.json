@@ -1,10 +1,11 @@
 {
-	"devDependencies": {
-		"@typescript-eslint/eslint-plugin": "^5.40.0",
-		"@typescript-eslint/parser": "^5.40.0",
-		"eslint": "^8.25.0"
+	"dependencies": {
+		"@eslint/json": "^0.9.0",
+		"eslint": "^9.17.0"
 	},
 	"scripts": {
 		"lint": "eslint ."
-	}
+	},
+	"main": "index.js",
+	"type": "module"
 }

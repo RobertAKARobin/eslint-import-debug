@@ -1,3 +1,7 @@
 {
-	"deno.enable": true
+	"eslint.enable": true,
+	"eslint.validate": [
+		"javascript",
+		"json"
+	]
 }

@@ -1,11 +1,23 @@
 /**
- * @template Input
- * @param {Input} input
- * @returns {Input}
+ * @template {string} U
  */
-function echo(input) {
-	return input;
+export class User {
+	/**
+	 * @type {U}
+	 */
+	name;
+
+	/**
+	 * @param {U} name
+	 */
+	constructor(name) {
+		this.name = name;
+	}
+
+	yellName() {
+		return /** @type {Uppercase<U>} */(this.name.toUpperCase());
+	}
 }
 
-const myString = echo(`hello`);
-const myNum = echo(32);
+const user = new User(`Steve`);
+user.yellName(); // Should be `STEVE`

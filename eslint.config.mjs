@@ -18,7 +18,9 @@ export default [
 			jsdoc,
 		},
 		rules: {
-			'jsdoc/check-template-names': `error`,
+			'@typescript-eslint/no-unsafe-assignment': `error`,
+			'jsdoc/valid-types': `error`,
+			'no-undef': `error`,
 		},
 	},
 ];

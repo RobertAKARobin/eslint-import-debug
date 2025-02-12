@@ -3,7 +3,7 @@
 		"allowJs": true,
 		"checkJs": true,
 		"experimentalDecorators": true,
-		"lib": ["ESNext"],
+		"lib": ["ESNext", "DOM"],
 		"module": "ESNext",
 		"noEmit": true,
 		"noImplicitOverride": true,

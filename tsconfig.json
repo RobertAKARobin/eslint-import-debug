@@ -8,11 +8,14 @@
 		"noEmit": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
+		"noUnusedLocals": false,
 		"strict": true,
+		"strictNullChecks": true,
 		"target": "ESNext",
 		"useDefineForClassFields": false
 	},
 	"include": [
-		"index.js"
+		"*.js",
+		"*.ts"
 	]
 }

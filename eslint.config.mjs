@@ -3,6 +3,9 @@ import jsdoc from 'eslint-plugin-jsdoc';
 
 export default [
 	{
+		env: {
+			browser: true,
+		},
 		files: [`**/*.js`],
 		languageOptions: {
 			parser: tsEslint.parser,

@@ -19,21 +19,26 @@
  * @template {() => any} Fun
  */
 
+const suffix = /** @type {const} */(`Event`);
+
+/**
+ * @typedef {typeof suffix} Suffix
+ */
+
 class CanNotify extends EventTarget {
 	/**
 	 * @template {keyof this} EventKey
 	 * @template {EventTarget & Record<EventKey, () => any>} Origin
 	 * @template {ReturnType<Origin[EventKey]>} EventDetail
-	 * @template {string} HandlerKey
-	 * @template {(event: CustomEvent<EventDetail>) => any} Handler
-	 * @template {Record<HandlerKey, Handler>} Listener
-	 * @param {EventKey} eventKey
+	 * @template Listener
+	 * @template {keyof Listener} HandlerKey
+	 * @param {EventKey extends `${string}${Suffix}` ? EventKey : never} eventKey
 	 * @param {Listener} listener
-	 * @param {HandlerKey} handlerKey
+	 * @param {Listener[HandlerKey] extends ((event: CustomEvent<EventDetail>) => any) ? HandlerKey : never} handlerKey
 	 * @returns {Origin}
 	 * @this {Origin}
 	 */
-	notify(eventKey, listener, handlerKey) {
+	emits(eventKey, listener, handlerKey) {
 		this.addEventListener(
 			/** @type {string} */(eventKey),
 			// @ts-expect-error Reports because addEventListener doesn't like CustomEvents
@@ -55,14 +60,14 @@ class DiceCounter {
 }
 
 class Dice extends CanNotify {
-	doRoll() {
+	rollEvent() {
 		 return 1 + Math.round(Math.random() * 5);
 	}
 }
 
 const prototypeProperties = Object.getOwnPropertyDescriptors(Dice.prototype);
 for (const prototypePropertyName in prototypeProperties) {
-	if (prototypePropertyName.startsWith(`do`) === false) { // Brittle AF, lots of things could start with `do`. At least we can be pretty certain these are methods and not properties bc properties usually aren't defined on prototype?
+	if (prototypePropertyName.endsWith(suffix) === false) { // Brittle AF. At least we can be pretty certain these are methods and not properties bc properties usually aren't defined on prototype?
 		continue;
 	}
 
@@ -82,10 +87,10 @@ for (const prototypePropertyName in prototypeProperties) {
 
 const diceCounter = new DiceCounter();
 const dice = new Dice()
-	.notify(`doRoll`, diceCounter, `onRoll`);
+	.emits(`rollEvent`, diceCounter, `onRoll`);
 
-const player1Roll = dice.doRoll();
-const player2Roll = dice.doRoll();
+const player1Roll = dice.rollEvent();
+const player2Roll = dice.rollEvent();
 
 console.log(diceCounter.sum, player1Roll, player2Roll);
 

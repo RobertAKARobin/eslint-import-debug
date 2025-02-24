@@ -2,6 +2,16 @@
  * `click = Component.event(() => {})` doesnt work because
  * 	-	instance methods are inefficient vs prototype methods
  * 	- cant iterate over instance methods without creating an instance, so cant find event name
+ *
+ * `static events = []`
+ * 	- static properties don't know about `this` so can't enforce correct typing
+ *
+ * classSubclass { foo() {} }, Component.define(Subclass, { events: [`foo`] })
+ * 	-	Can't enforce typing because would need methods to return an event but want them to return a value
+ *
+ * Want
+ * 	- When method is called, dispatches an event
+ * 	- Method returns original value, not an event
  */
 
 /**
@@ -11,27 +21,8 @@
 
 class CanNotify extends EventTarget {
 	/**
-	 * @template Value
-	 * @template {(this: EventTarget) => Value} DoWhat
-	 * @param {DoWhat} doWhat
-	 * @returns {Decorated<DoWhat>}
-	 */
-	static event(doWhat) {
-		const intercepted = /** @type {Decorated<DoWhat>} */(function() {
-			const value = doWhat.call(this);
-			const event = new CustomEvent(`poo`, { detail: value});
-			this.dispatchEvent(event);
-			return value;
-		});
-		Object.assign(intercepted, {
-			eventName: ``,
-		});
-		return intercepted;
-	}
-
-	/**
 	 * @template {keyof this} EventKey
-	 * @template {EventTarget & Record<EventKey, Decorated<() => any>>} Origin
+	 * @template {EventTarget & Record<EventKey, () => any>} Origin
 	 * @template {ReturnType<Origin[EventKey]>} EventDetail
 	 * @template {string} HandlerKey
 	 * @template {(event: CustomEvent<EventDetail>) => any} Handler
@@ -44,8 +35,7 @@ class CanNotify extends EventTarget {
 	 */
 	notify(eventKey, listener, handlerKey) {
 		this.addEventListener(
-			// /** @type {string} */(eventKey),
-			`poo`,
+			/** @type {string} */(eventKey),
 			// @ts-expect-error Reports because addEventListener doesn't like CustomEvents
 			listener[handlerKey].bind(listener),
 		);
@@ -65,20 +55,39 @@ class DiceCounter {
 }
 
 class Dice extends CanNotify {
-	roll = CanNotify.event(() => 1 + Math.round(Math.random() * 5));
+	doRoll() {
+		 return 1 + Math.round(Math.random() * 5);
+	}
 }
 
-for (const propertyName in Object.getOwnPropertyDescriptors(Dice.prototype)) {
-	console.log(propertyName);
+const prototypeProperties = Object.getOwnPropertyDescriptors(Dice.prototype);
+for (const prototypePropertyName in prototypeProperties) {
+	if (prototypePropertyName.startsWith(`do`) === false) { // Brittle AF, lots of things could start with `do`. At least we can be pretty certain these are methods and not properties bc properties usually aren't defined on prototype?
+		continue;
+	}
+
+	// @ts-expect-error We know this funciton exists
+	const fun = Dice.prototype[prototypePropertyName];
+	Object.assign(Dice.prototype, {
+		/**
+		 * @this {CanNotify}
+		 */
+		[prototypePropertyName](/** @type {any} */...args) {
+			const detail = fun.apply(this, args);
+			this.dispatchEvent(new CustomEvent(prototypePropertyName, { detail }));
+			return detail;
+		},
+	});
 }
 
 const diceCounter = new DiceCounter();
 const dice = new Dice()
-	.notify(`roll`, diceCounter, `onRoll`);
-const dice2 = new Dice();
+	.notify(`doRoll`, diceCounter, `onRoll`);
 
-const player1Roll = dice.roll();
-const player2Roll = dice.roll();
+const player1Roll = dice.doRoll();
+const player2Roll = dice.doRoll();
+
+console.log(diceCounter.sum, player1Roll, player2Roll);
 
 if (diceCounter.sum !== (player1Roll + player2Roll)) {
 	throw new Error(`oh no`);

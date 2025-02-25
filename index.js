@@ -9,14 +9,24 @@
  * classSubclass { foo() {} }, Component.define(Subclass, { events: [`foo`] })
  * 	-	Can't enforce typing because would need methods to return an event but want them to return a value
  *
+ * const Class = define(class {}, { events: [] })
+ * 	-	Can decorate events/attributes but results in a really complex type that's super gross
+ *
  * Want
  * 	- When method is called, dispatches an event
  * 	- Method returns original value, not an event
  */
 
 /**
- * @typedef {Fun & { eventName: string }} Decorated
- * @template {() => any} Fun
+ * @typedef {Base & Record<Property, Base[Property] & Extension>} Augment
+ * @template Base
+ * @template {keyof Base} Property
+ * @template {object} Extension
+ */
+
+/**
+ * @typedef {{ isEvent: true }} IsEvent
+ * @typedef {{ isAttribute: true }} IsAttribute
  */
 
 const attrSuffix = /** @type {const} */(`_attr`);
@@ -46,7 +56,7 @@ class CanNotify extends EventTarget {
 
 	/**
 	 * @template {keyof this} AttrKey
-	 * @param {AttrKey} attrKey
+	 * @param {this[AttrKey] extends IsAttribute ? AttrKey : never} attrKey
 	 * @returns {this}
 	 */
 	changes(attrKey) {
@@ -59,9 +69,9 @@ class CanNotify extends EventTarget {
 	 * @template {ReturnType<Origin[EventKey]>} EventDetail
 	 * @template Listener
 	 * @template {keyof Listener} HandlerKey
-	 * @param {EventKey extends `${string}${EventSuffix}` ? EventKey : never} eventKey
+	 * @param {Origin[EventKey] extends IsEvent ? EventKey : never} eventKey
 	 * @param {Listener} listener
-	 * @param {Listener[HandlerKey] extends ((event: CustomEvent<EventDetail>) => any) ? HandlerKey : never} handlerKey
+	 * @param {Listener[HandlerKey] extends (event: CustomEvent<EventDetail>) => any ? HandlerKey : never} handlerKey
 	 * @returns {Origin}
 	 * @this {Origin}
 	 */
@@ -87,8 +97,8 @@ class DiceCounter {
 }
 
 class Dice extends CanNotify {
-	get poo() { return 3 }
-	set poo(value) {}
+	get myNum() { return 3 }
+	set myNum(value) {}
 
 	isBoolean = false;
 
@@ -104,22 +114,15 @@ class Dice extends CanNotify {
 }
 
 /**
- * @typedef {Base & Record<Property, Base[Property] & Extension>} Augment
- * @template Base
- * @template {keyof Base} Property
- * @template {object} Extension
- */
-
-/**
  * @template {{ new(): unknown }} Base
  * @template {InstanceType<Base>} Instance
  * @template {keyof Instance} EventName
  * @template {keyof Instance} AttributeName
  * @param {Base} base
  * @param {object} [options]
- * @param {Array<Instance[EventName] extends () => any ? EventName : never>} [options.events]
- * @param {Array<Instance[AttributeName] extends string | number ? AttributeName : never>} [options.attributes]
- * @returns {{ new(): Augment<Instance, EventName, { isEvent: true }> & Augment<Instance, AttributeName, { isAttribute: true }>}}
+ * @param {Array<Instance[EventName] extends () => any ? (EventName | [EventName, string]) : never>} [options.events]
+ * @param {Array<Instance[AttributeName] extends string | number ? (AttributeName | [AttributeName, string]) : never>} [options.attributes]
+ * @returns {{ new(): Augment<Instance, EventName, IsEvent> & Augment<Instance, AttributeName, IsAttribute>}}
  */
 function define(base, options = {}) {
 	// @ts-ignore
@@ -127,13 +130,9 @@ function define(base, options = {}) {
 }
 
 const Decorated = define(Dice, {
-	events: ['roll', 'sayHi'],
-	attributes: ['name'],
+	events: ['roll', ['sayHi', 'poo']],
+	attributes: ['name', 'myNum'],
 });
-
-const foo = new Decorated();
-foo.poo;
-foo.name.toUpperCase();
 
 const prototypeProperties = Object.getOwnPropertyDescriptors(Dice.prototype);
 for (const prototypePropertyName in prototypeProperties) {
@@ -172,14 +171,14 @@ for (const prototypePropertyName in prototypeProperties) {
 }
 
 const diceCounter = new DiceCounter();
-const dice = new Dice()
-	.emits(`roll_event`, diceCounter, `onRoll`);
+const dice = new Decorated()
+	.emits(`roll`, diceCounter, 'onRoll');
 
-const player1Roll = dice.roll_event();
-const player2Roll = dice.roll_event();
+// const player1Roll = dice.roll_event();
+// const player2Roll = dice.roll_event();
 
-console.log(diceCounter.sum, player1Roll, player2Roll);
+// console.log(diceCounter.sum, player1Roll, player2Roll);
 
-if (diceCounter.sum !== (player1Roll + player2Roll)) {
-	throw new Error(`oh no`);
-}
+// if (diceCounter.sum !== (player1Roll + player2Roll)) {
+// 	throw new Error(`oh no`);
+// }

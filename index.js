@@ -87,13 +87,53 @@ class DiceCounter {
 }
 
 class Dice extends CanNotify {
-	get poo_attr() { return 3 }
-	set poo_attr(value) {}
+	get poo() { return 3 }
+	set poo(value) {}
 
-	roll_event() {
+	isBoolean = false;
+
+	name = `true`;
+
+	sayHi() {
+		return true;
+	}
+
+	roll() {
 		 return 1 + Math.round(Math.random() * 5);
 	}
 }
+
+/**
+ * @typedef {Base & Record<Property, Base[Property] & Extension>} Augment
+ * @template Base
+ * @template {keyof Base} Property
+ * @template {object} Extension
+ */
+
+/**
+ * @template {{ new(): unknown }} Base
+ * @template {InstanceType<Base>} Instance
+ * @template {keyof Instance} EventName
+ * @template {keyof Instance} AttributeName
+ * @param {Base} base
+ * @param {object} [options]
+ * @param {Array<Instance[EventName] extends () => any ? EventName : never>} [options.events]
+ * @param {Array<Instance[AttributeName] extends string | number ? AttributeName : never>} [options.attributes]
+ * @returns {{ new(): Augment<Instance, EventName, { isEvent: true }> & Augment<Instance, AttributeName, { isAttribute: true }>}}
+ */
+function define(base, options = {}) {
+	// @ts-ignore
+	return base;
+}
+
+const Decorated = define(Dice, {
+	events: ['roll', 'sayHi'],
+	attributes: ['name'],
+});
+
+const foo = new Decorated();
+foo.poo;
+foo.name.toUpperCase();
 
 const prototypeProperties = Object.getOwnPropertyDescriptors(Dice.prototype);
 for (const prototypePropertyName in prototypeProperties) {

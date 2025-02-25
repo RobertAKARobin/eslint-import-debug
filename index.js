@@ -11,6 +11,7 @@
  *
  * const Class = define(class {}, { events: [] })
  * 	-	Can decorate events/attributes but results in a really complex type that's super gross
+ * 	-	Actually nm
  *
  * Want
  * 	- When method is called, dispatches an event
@@ -56,10 +57,15 @@ class CanNotify extends EventTarget {
 
 	/**
 	 * @template {keyof this} AttrKey
+	 * @template {this[AttrKey]} EventDetail
+	 * @template Listener
+	 * @template {keyof Listener} HandlerKey
 	 * @param {this[AttrKey] extends IsAttribute ? AttrKey : never} attrKey
+	 * @param {Listener} listener
+	 * @param {Listener[HandlerKey] extends (event: CustomEvent<EventDetail>) => any ? HandlerKey : never} handlerKey
 	 * @returns {this}
 	 */
-	changes(attrKey) {
+	changes(attrKey, listener, handlerKey) {
 		return this;
 	}
 
@@ -69,7 +75,7 @@ class CanNotify extends EventTarget {
 	 * @template {ReturnType<Origin[EventKey]>} EventDetail
 	 * @template Listener
 	 * @template {keyof Listener} HandlerKey
-	 * @param {Origin[EventKey] extends IsEvent ? EventKey : never} eventKey
+	 * @param {this[EventKey] extends IsEvent ? EventKey : never} eventKey
 	 * @param {Listener} listener
 	 * @param {Listener[HandlerKey] extends (event: CustomEvent<EventDetail>) => any ? HandlerKey : never} handlerKey
 	 * @returns {Origin}
@@ -104,6 +110,8 @@ class Dice extends CanNotify {
 
 	name = `true`;
 
+	three = 3;
+
 	sayHi() {
 		return true;
 	}
@@ -122,12 +130,14 @@ class Dice extends CanNotify {
  * @param {object} [options]
  * @param {Array<Instance[EventName] extends () => any ? (EventName | [EventName, string]) : never>} [options.events]
  * @param {Array<Instance[AttributeName] extends string | number ? (AttributeName | [AttributeName, string]) : never>} [options.attributes]
- * @returns {{ new(): Augment<Instance, EventName, IsEvent> & Augment<Instance, AttributeName, IsAttribute>}}
+ * @returns {{ new(): Instance & {[Key in EventName]: Instance[Key] & IsEvent} & {[Key in AttributeName]: Instance[Key] & IsAttribute}}}
  */
 function define(base, options = {}) {
 	// @ts-ignore
 	return base;
 }
+
+// Augment<Instance, EventName, IsEvent> & Augment<Instance, AttributeName, IsAttribute>
 
 const Decorated = define(Dice, {
 	events: ['roll', ['sayHi', 'poo']],
@@ -172,7 +182,8 @@ for (const prototypePropertyName in prototypeProperties) {
 
 const diceCounter = new DiceCounter();
 const dice = new Decorated()
-	.emits(`roll`, diceCounter, 'onRoll');
+	.emits(`roll`, diceCounter, 'onRoll')
+	.changes('myNum', diceCounter, 'onRoll');
 
 // const player1Roll = dice.roll_event();
 // const player2Roll = dice.roll_event();

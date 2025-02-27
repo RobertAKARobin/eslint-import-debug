@@ -1,33 +1,23 @@
 /**
- * `click = Component.event(() => {})` doesnt work because
- * 	-	instance methods are inefficient vs prototype methods
- * 	- cant iterate over instance methods without creating an instance, so cant find event name
- *
- * `static events = []`
- * 	- static properties don't know about `this` so can't enforce correct typing
- *
- * classSubclass { foo() {} }, Component.define(Subclass, { events: [`foo`] })
- * 	-	Can't enforce typing because would need methods to return an event but want them to return a value
- *
- * const Class = define(class {}, { events: [] })
- * 	-	Can decorate events/attributes but results in a really complex type that's super gross
- * 	-	Actually nm
- *
- * Want
- * 	- When method is called, dispatches an event
- * 	- Method returns original value, not an event
- */
-
-/**
- * @typedef {Base & Record<Property, Base[Property] & Extension>} Augment
- * @template Base
- * @template {keyof Base} Property
- * @template {object} Extension
+ * @import { DecoratedInstance } from './types.d.ts';
  */
 
 /**
  * @typedef {{ isEvent: true }} IsEvent
  * @typedef {{ isAttribute: true }} IsAttribute
+ * @typedef {string | number | boolean} AttributeValue
+ */
+
+/**
+ * @typedef {Instance[AttributeKey] extends AttributeValue ? (AttributeKey | [AttributeKey, string]) : never} AttributeNames
+ * @template Instance
+ * @template {keyof Instance} AttributeKey
+ */
+
+/**
+ * @typedef {Instance[EventKey] extends () => any ? (EventKey | [EventKey, string]) : never} EventKeys
+ * @template Instance
+ * @template {keyof Instance} EventKey
  */
 
 const attrSuffix = /** @type {const} */(`_attr`);
@@ -124,20 +114,18 @@ class Dice extends CanNotify {
 /**
  * @template {{ new(): unknown }} Base
  * @template {InstanceType<Base>} Instance
- * @template {keyof Instance} EventName
- * @template {keyof Instance} AttributeName
+ * @template {keyof Instance} AttributeKey
+ * @template {keyof Instance} EventKey
  * @param {Base} base
  * @param {object} [options]
- * @param {Array<Instance[EventName] extends () => any ? (EventName | [EventName, string]) : never>} [options.events]
- * @param {Array<Instance[AttributeName] extends string | number ? (AttributeName | [AttributeName, string]) : never>} [options.attributes]
- * @returns {{ new(): Instance & {[Key in EventName]: Instance[Key] & IsEvent} & {[Key in AttributeName]: Instance[Key] & IsAttribute}}}
+ * @param {Array<AttributeNames<Instance, AttributeKey>>} [options.attributes]
+ * @param {Array<EventKeys<Instance, EventKey>>} [options.events]
+ * @returns {DecoratedInstance<Instance, EventKey, AttributeKey>}
  */
 function define(base, options = {}) {
 	// @ts-ignore
 	return base;
 }
-
-// Augment<Instance, EventName, IsEvent> & Augment<Instance, AttributeName, IsAttribute>
 
 const Decorated = define(Dice, {
 	events: ['roll', ['sayHi', 'poo']],

@@ -2,21 +2,7 @@
  * @import { AttributeFlag, AttributeNameConfig, AttributeNameTest, DecoratedComponent, EventFlag, EventHandlerTest, EventNameConfig, EventNameTest } from './types.d';
  */
 
-/**
- * @typedef {Instance[EventKey] extends () => any ? (EventKey | [EventKey, string]) : never} EventKeys
- * @template Instance
- * @template {keyof Instance} EventKey
- */
-
-const attrSuffix = /** @type {const} */(`_attr`);
-const eventSuffix = /** @type {const} */(`_event`);
-
-/**
- * @typedef {typeof attrSuffix} AttrSuffix
- * @typedef {typeof eventSuffix} EventSuffix
- */
-
-class CanNotify extends HTMLAnchorElement {
+class CanNotify extends EventTarget {
 	/**
 	 * @type {Array<string>}
 	 * @readonly
@@ -104,65 +90,48 @@ class Dice extends CanNotify {
  * @param {Base} base
  * @param {object} [options]
  * @param {Array<AttributeNameConfig<Instance, AttributeKey>>} [options.attributes]
- * @param {Array<EventKeys<Instance, EventKey>>} [options.events]
+ * @param {Array<EventNameConfig<Instance, EventKey>>} [options.events]
  * @returns {DecoratedComponent<Instance, AttributeKey, EventKey>}
  */
 function define(base, options = {}) {
+	const descriptions = Object.getOwnPropertyDescriptors(base.prototype);
+
+	if (options.events !== undefined) {
+		for (const event of options.events) {
+			if (typeof event === `string`) {
+				const description = descriptions[event];
+				Object.defineProperty(base.prototype, event, {
+					/**
+					 * @param {any[]} args
+					 */
+					value(...args) {
+						const detail = description.value(...args);
+						this.dispatchEvent(new CustomEvent(event, { detail }));
+						return detail;
+					},
+				});
+			}
+		}
+	}
 	// @ts-ignore
 	return base;
 }
 
 const Decorated = define(Dice, {
-	attributes: ['href', 'name', 'myNum'],
-	events: ['roll', ['sayHi', 'poo']],
+	attributes: ['myNum'],
+	events: ['roll'],
 });
-
-const prototypeProperties = Object.getOwnPropertyDescriptors(Dice.prototype);
-for (const prototypePropertyName in prototypeProperties) {
-	if (prototypePropertyName.endsWith(eventSuffix)) { // Brittle AF. At least we can be pretty certain these are methods and not properties bc properties usually aren't defined on prototype?
-		// @ts-expect-error We know this funciton exists
-		const fun = Dice.prototype[prototypePropertyName];
-		Object.assign(Dice.prototype, {
-			/**
-			 * @this {CanNotify}
-			 */
-			[prototypePropertyName](/** @type {any} */...args) {
-				const detail = fun.apply(this, args);
-				this.dispatchEvent(new CustomEvent(prototypePropertyName, { detail }));
-				return detail;
-			},
-		});
-	}
-
-	if (prototypePropertyName.endsWith(attrSuffix)) {
-		const attributeName = prototypePropertyName;
-		const definition = prototypeProperties[prototypePropertyName];
-		Object.defineProperty(Dice.prototype, prototypePropertyName, {
-			...definition,
-			// get() {
-			// 	return this.getAttribute(attributeName);
-			// },
-			// set(value) {
-			// 	if (attributeValueIsEmpty(value)) {
-			// 		this.removeAttribute(attributeName);
-			// 	} else {
-			// 		this.setAttribute(attributeName, value.toString());
-			// 	}
-			// },
-		});
-	}
-}
 
 const diceCounter = new DiceCounter();
 const dice = new Decorated()
 	.onEvent(`roll`, diceCounter, 'onRoll')
 	.onChange('myNum', diceCounter, 'onRoll');
 
-// const player1Roll = dice.roll_event();
-// const player2Roll = dice.roll_event();
+const player1Roll = dice.roll();
+const player2Roll = dice.roll();
 
-// console.log(diceCounter.sum, player1Roll, player2Roll);
+console.log(diceCounter.sum, player1Roll, player2Roll);
 
-// if (diceCounter.sum !== (player1Roll + player2Roll)) {
-// 	throw new Error(`oh no`);
-// }
+if (diceCounter.sum !== (player1Roll + player2Roll)) {
+	throw new Error(`oh no`);
+}

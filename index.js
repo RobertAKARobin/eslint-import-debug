@@ -1,17 +1,5 @@
 /**
- * @import { DecoratedInstance } from './types.d.ts';
- */
-
-/**
- * @typedef {{ isEvent: true }} IsEvent
- * @typedef {{ isAttribute: true }} IsAttribute
- * @typedef {string | number | boolean} AttributeValue
- */
-
-/**
- * @typedef {Instance[AttributeKey] extends AttributeValue ? (AttributeKey | [AttributeKey, string]) : never} AttributeNames
- * @template Instance
- * @template {keyof Instance} AttributeKey
+ * @import { AttributeFlag, AttributeNameConfig, AttributeNameTest, DecoratedComponent, EventFlag, EventHandlerTest, EventNameConfig, EventNameTest } from './types.d';
  */
 
 /**
@@ -28,7 +16,7 @@ const eventSuffix = /** @type {const} */(`_event`);
  * @typedef {typeof eventSuffix} EventSuffix
  */
 
-class CanNotify extends EventTarget {
+class CanNotify extends HTMLAnchorElement {
 	/**
 	 * @type {Array<string>}
 	 * @readonly
@@ -46,16 +34,16 @@ class CanNotify extends EventTarget {
 	}
 
 	/**
-	 * @template {keyof this} AttrKey
-	 * @template {this[AttrKey]} EventDetail
+	 * @template {keyof this} AttributeKey
+	 * @template {this[AttributeKey]} EventDetail
 	 * @template Listener
 	 * @template {keyof Listener} HandlerKey
-	 * @param {this[AttrKey] extends IsAttribute ? AttrKey : never} attrKey
+	 * @param {AttributeNameTest<this, AttributeKey>} attributeKey
 	 * @param {Listener} listener
 	 * @param {Listener[HandlerKey] extends (event: CustomEvent<EventDetail>) => any ? HandlerKey : never} handlerKey
 	 * @returns {this}
 	 */
-	changes(attrKey, listener, handlerKey) {
+	onChange(attributeKey, listener, handlerKey) {
 		return this;
 	}
 
@@ -65,13 +53,13 @@ class CanNotify extends EventTarget {
 	 * @template {ReturnType<Origin[EventKey]>} EventDetail
 	 * @template Listener
 	 * @template {keyof Listener} HandlerKey
-	 * @param {this[EventKey] extends IsEvent ? EventKey : never} eventKey
+	 * @param {EventNameTest<this, EventKey>} eventKey
 	 * @param {Listener} listener
-	 * @param {Listener[HandlerKey] extends (event: CustomEvent<EventDetail>) => any ? HandlerKey : never} handlerKey
+	 * @param {EventHandlerTest<Listener, HandlerKey, EventDetail>} handlerKey
 	 * @returns {Origin}
 	 * @this {Origin}
 	 */
-	emits(eventKey, listener, handlerKey) {
+	onEvent(eventKey, listener, handlerKey) {
 		this.addEventListener(
 			/** @type {string} */(eventKey),
 			// @ts-expect-error Reports because addEventListener doesn't like CustomEvents
@@ -93,12 +81,9 @@ class DiceCounter {
 }
 
 class Dice extends CanNotify {
-	get myNum() { return 3 }
-	set myNum(value) {}
+	myNum = 3;
 
 	isBoolean = false;
-
-	name = `true`;
 
 	three = 3;
 
@@ -118,9 +103,9 @@ class Dice extends CanNotify {
  * @template {keyof Instance} EventKey
  * @param {Base} base
  * @param {object} [options]
- * @param {Array<AttributeNames<Instance, AttributeKey>>} [options.attributes]
+ * @param {Array<AttributeNameConfig<Instance, AttributeKey>>} [options.attributes]
  * @param {Array<EventKeys<Instance, EventKey>>} [options.events]
- * @returns {DecoratedInstance<Instance, EventKey, AttributeKey>}
+ * @returns {DecoratedComponent<Instance, AttributeKey, EventKey>}
  */
 function define(base, options = {}) {
 	// @ts-ignore
@@ -128,8 +113,8 @@ function define(base, options = {}) {
 }
 
 const Decorated = define(Dice, {
+	attributes: ['href', 'name', 'myNum'],
 	events: ['roll', ['sayHi', 'poo']],
-	attributes: ['name', 'myNum'],
 });
 
 const prototypeProperties = Object.getOwnPropertyDescriptors(Dice.prototype);
@@ -170,8 +155,8 @@ for (const prototypePropertyName in prototypeProperties) {
 
 const diceCounter = new DiceCounter();
 const dice = new Decorated()
-	.emits(`roll`, diceCounter, 'onRoll')
-	.changes('myNum', diceCounter, 'onRoll');
+	.onEvent(`roll`, diceCounter, 'onRoll')
+	.onChange('myNum', diceCounter, 'onRoll');
 
 // const player1Roll = dice.roll_event();
 // const player2Roll = dice.roll_event();

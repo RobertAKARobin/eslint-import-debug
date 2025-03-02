@@ -1,8 +1,15 @@
 /**
- * @import { AttributeFlag, AttributeNameConfig, AttributeNameTest, DecoratedComponent, EventFlag, EventHandlerTest, EventNameConfig, EventNameTest } from './types.d';
+ * @import { KeysOfType } from './types.d';
  */
 
-class CanNotify extends EventTarget {
+/**
+ * @typedef {{ attribute?: true }} IsAttr
+ */
+
+/**
+ * @template {object} Self
+ */
+class CanNotify extends Element {
 	/**
 	 * @type {Array<string>}
 	 * @readonly
@@ -10,49 +17,46 @@ class CanNotify extends EventTarget {
 	static observedAttributes = [];
 
 	/**
-	 * @template Value
-	 * @param {Value} initial
-	 * @returns {Value & { attribute: true }}
+	 * @template [Value=void]
+	 * @param {object} [options]
+	 * @param {string} [options.name]
+	 * @param {Value} [options.initial]
+	 * @returns {number | IsAttr}
 	 */
-	static attribute(initial) {
-		console.log(this.attribute);
-		return /** @type {Value & { attribute: true }} */(initial);
+	static attribute(options = {}) {
+		return {
+			...options,
+			attribute: true,
+		};
 	}
 
 	/**
-	 * @template {keyof this} AttributeKey
-	 * @template {this[AttributeKey]} EventDetail
-	 * @template Listener
-	 * @template {keyof Listener} HandlerKey
-	 * @param {AttributeNameTest<this, AttributeKey>} attributeKey
-	 * @param {Listener} listener
-	 * @param {Listener[HandlerKey] extends (event: CustomEvent<EventDetail>) => any ? HandlerKey : never} handlerKey
-	 * @returns {this}
+	 * @param {KeysOfType<Self, IsAttr>} attributeKey
 	 */
-	onChange(attributeKey, listener, handlerKey) {
+	onChange(attributeKey) {
 		return this;
 	}
 
-	/**
-	 * @template {keyof this} EventKey
-	 * @template {EventTarget & Record<EventKey, () => any>} Origin
-	 * @template {ReturnType<Origin[EventKey]>} EventDetail
-	 * @template Listener
-	 * @template {keyof Listener} HandlerKey
-	 * @param {EventNameTest<this, EventKey>} eventKey
-	 * @param {Listener} listener
-	 * @param {EventHandlerTest<Listener, HandlerKey, EventDetail>} handlerKey
-	 * @returns {Origin}
-	 * @this {Origin}
-	 */
-	onEvent(eventKey, listener, handlerKey) {
-		this.addEventListener(
-			/** @type {string} */(eventKey),
-			// @ts-expect-error Reports because addEventListener doesn't like CustomEvents
-			listener[handlerKey].bind(listener),
-		);
-		return this;
-	}
+	// /**
+	//  * @template {keyof this} EventKey
+	//  * @template {EventTarget & Record<EventKey, () => any>} Origin
+	//  * @template {ReturnType<Origin[EventKey]>} EventDetail
+	//  * @template Listener
+	//  * @template {keyof Listener} HandlerKey
+	//  * @param {EventNameTest<this, EventKey>} eventKey
+	//  * @param {Listener} listener
+	//  * @param {EventHandlerTest<Listener, HandlerKey, EventDetail>} handlerKey
+	//  * @returns {Origin}
+	//  * @this {Origin}
+	//  */
+	// onEvent(eventKey, listener, handlerKey) {
+	// 	this.addEventListener(
+	// 		/** @type {string} */(eventKey),
+	// 		// @ts-expect-error Reports because addEventListener doesn't like CustomEvents
+	// 		listener[handlerKey].bind(listener),
+	// 	);
+	// 	return this;
+	// }
 }
 
 class DiceCounter {
@@ -66,14 +70,18 @@ class DiceCounter {
 	}
 }
 
+/**
+ * @extends CanNotify<Dice>
+ */
 class Dice extends CanNotify {
-	myNum = 3;
+	myNum = CanNotify.attribute({ initial: 3 });
 
 	isBoolean = false;
 
 	three = 3;
 
 	sayHi() {
+		this.onChange('myNum')
 		return true;
 	}
 
@@ -82,50 +90,25 @@ class Dice extends CanNotify {
 	}
 }
 
-/**
- * @template {{ new(): unknown }} Base
- * @template {InstanceType<Base>} Instance
- * @template {keyof Instance} AttributeKey
- * @template {keyof Instance} EventKey
- * @param {Base} base
- * @param {object} [options]
- * @param {Array<AttributeNameConfig<Instance, AttributeKey>>} [options.attributes]
- * @param {Array<EventNameConfig<Instance, EventKey>>} [options.events]
- * @returns {DecoratedComponent<Instance, AttributeKey, EventKey>}
- */
-function define(base, options = {}) {
-	const descriptions = Object.getOwnPropertyDescriptors(base.prototype);
+const descriptors = Object.getOwnPropertyDescriptors(Dice.prototype);
+for (const propertyName in descriptors) {
+	const property = descriptors[propertyName];
 
-	if (options.events !== undefined) {
-		for (const event of options.events) {
-			if (typeof event === `string`) {
-				const description = descriptions[event];
-				Object.defineProperty(base.prototype, event, {
-					/**
-					 * @param {any[]} args
-					 */
-					value(...args) {
-						const detail = description.value(...args);
-						this.dispatchEvent(new CustomEvent(event, { detail }));
-						return detail;
-					},
-				});
-			}
-		}
+	if (property.get === undefined) {
+		continue;
 	}
-	// @ts-ignore
-	return base;
+
+	Object.defineProperty(Dice.prototype, propertyName, {
+		get() {
+			return this.getAttribute(propertyName);
+		},
+	});
 }
 
-const Decorated = define(Dice, {
-	attributes: ['myNum'],
-	events: ['roll'],
-});
-
 const diceCounter = new DiceCounter();
-const dice = new Decorated()
-	.onEvent(`roll`, diceCounter, 'onRoll')
-	.onChange('myNum', diceCounter, 'onRoll');
+const dice = new Dice()
+	// .onEvent(`roll`, diceCounter, 'onRoll')
+	.onChange('myNum');
 
 const player1Roll = dice.roll();
 const player2Roll = dice.roll();

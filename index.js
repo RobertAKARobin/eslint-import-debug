@@ -21,7 +21,7 @@ class CanNotify extends Element {
 	 * @param {object} [options]
 	 * @param {string} [options.name]
 	 * @param {Value} [options.initial]
-	 * @returns {number | IsAttr}
+	 * @returns {number & IsAttr}
 	 */
 	static attribute(options = {}) {
 		return {
@@ -82,6 +82,7 @@ class Dice extends CanNotify {
 
 	sayHi() {
 		this.onChange('myNum')
+		this.myNum = 4;
 		return true;
 	}
 

@@ -14,21 +14,12 @@ const Element = dom.window.Element;
 /**
  * @template {object} Self
  */
-class CanNotify extends Element {
+class Component extends Element {
 	/**
 	 * @type {Array<string>}
 	 * @readonly
 	 */
 	static observedAttributes = [];
-
-	/**
-	 * @param {Parameters<Element['getAttribute']>} args
-	 * @returns {ReturnType<Element['getAttribute']> & IsAttr}
-	 * @override
-	 */
-	getAttribute(...args) {
-		throw `poo`;
-	}
 
 	/**
 	 * @param {KeysOfType<Self, IsAttr>} attributeKey
@@ -75,17 +66,9 @@ class DiceCounter {
 }
 
 /**
- * @extends CanNotify<Dice>
+ * @extends Component<Dice>
  */
-class Dice extends CanNotify {
-	get href() {
-		return this.getAttribute(``);
-	}
-
-	set href(value) {
-		this.setAttribute(``, `foo`);
-	}
-
+class Dice extends Component {
 	isBoolean = false;
 
 	three = 3;

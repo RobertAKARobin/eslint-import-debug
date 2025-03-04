@@ -79,11 +79,11 @@ class DiceCounter {
  */
 class Dice extends CanNotify {
 	get href() {
-		return this.getAttribute(`href`);
+		return this.getAttribute(``);
 	}
 
 	set href(value) {
-		this.setAttribute(`href`, `foo`);
+		this.setAttribute(``, `foo`);
 	}
 
 	isBoolean = false;
@@ -104,22 +104,21 @@ class Dice extends CanNotify {
 const instance = Object.create(Dice.prototype);
 const descriptors = Object.getOwnPropertyDescriptors(Dice.prototype);
 for (const propertyName in descriptors) {
-	console.log(propertyName);
-
 	const property = descriptors[propertyName];
 
 	if (property.get === undefined) {
 		continue;
 	}
 
-	if (propertyName === `href`) {
-		try {
-			property.get.call(instance);
-		} catch (error) {
-			if (error === `poo`) {
-				console.log(`>>> ${propertyName}`);
-			}
-		}
+	let flag;
+	try {
+		property.get.call(instance);
+	} catch (error) {
+		flag = error;
+	}
+
+	if (flag !== `poo`) {
+		continue;
 	}
 
 	Object.defineProperty(Dice.prototype, propertyName, {

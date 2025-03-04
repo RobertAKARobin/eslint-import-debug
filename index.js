@@ -1,3 +1,8 @@
+import { JSDOM } from 'jsdom';
+
+const dom = new JSDOM();
+const Element = dom.window.Element;
+
 /**
  * @import { KeysOfType } from './types.d';
  */
@@ -17,17 +22,12 @@ class CanNotify extends Element {
 	static observedAttributes = [];
 
 	/**
-	 * @template [Value=void]
-	 * @param {object} [options]
-	 * @param {string} [options.name]
-	 * @param {Value} [options.initial]
-	 * @returns {Value & IsAttr}
+	 * @param {Parameters<Element['getAttribute']>} args
+	 * @returns {ReturnType<Element['getAttribute']> & IsAttr}
+	 * @override
 	 */
-	static attribute(options = {}) {
-		return {
-			...options,
-			attribute: true,
-		};
+	getAttribute(...args) {
+		throw `poo`;
 	}
 
 	/**
@@ -57,6 +57,10 @@ class CanNotify extends Element {
 	// 	);
 	// 	return this;
 	// }
+
+	set() {
+
+	}
 }
 
 class DiceCounter {
@@ -74,14 +78,20 @@ class DiceCounter {
  * @extends CanNotify<Dice>
  */
 class Dice extends CanNotify {
-	myNum = CanNotify.attribute({ initial: 3 });
+	get href() {
+		return this.getAttribute(`href`);
+	}
+
+	set href(value) {
+		this.setAttribute(`href`, `foo`);
+	}
 
 	isBoolean = false;
 
 	three = 3;
 
 	sayHi() {
-		this.onChange('myNum')
+		this.onChange('href')
 		this.myNum = 4;
 		return true;
 	}
@@ -91,12 +101,25 @@ class Dice extends CanNotify {
 	}
 }
 
+const instance = Object.create(Dice.prototype);
 const descriptors = Object.getOwnPropertyDescriptors(Dice.prototype);
 for (const propertyName in descriptors) {
+	console.log(propertyName);
+
 	const property = descriptors[propertyName];
 
 	if (property.get === undefined) {
 		continue;
+	}
+
+	if (propertyName === `href`) {
+		try {
+			property.get.call(instance);
+		} catch (error) {
+			if (error === `poo`) {
+				console.log(`>>> ${propertyName}`);
+			}
+		}
 	}
 
 	Object.defineProperty(Dice.prototype, propertyName, {
@@ -106,16 +129,16 @@ for (const propertyName in descriptors) {
 	});
 }
 
-const diceCounter = new DiceCounter();
-const dice = new Dice()
-	// .onEvent(`roll`, diceCounter, 'onRoll')
-	.onChange('myNum');
+// const diceCounter = new DiceCounter();
+// const dice = new Dice()
+// 	// .onEvent(`roll`, diceCounter, 'onRoll')
+// 	.onChange('href');
 
-const player1Roll = dice.roll();
-const player2Roll = dice.roll();
+// const player1Roll = dice.roll();
+// const player2Roll = dice.roll();
 
-console.log(diceCounter.sum, player1Roll, player2Roll);
+// console.log(diceCounter.sum, player1Roll, player2Roll);
 
-if (diceCounter.sum !== (player1Roll + player2Roll)) {
-	throw new Error(`oh no`);
-}
+// if (diceCounter.sum !== (player1Roll + player2Roll)) {
+// 	throw new Error(`oh no`);
+// }
